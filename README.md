@@ -312,7 +312,21 @@ python scripts/optitrack_to_robot.py --server_ip <server_ip> --client_ip <client
 ```
 You should see the visualization of the retargeted robot motion in a mujoco window.
 
+## Real-Time Retargeting from VMC to Robot
 
+1. Use your preferred VMC mocap software and enable its data streaming option. Here, Dollars MONO is used as an example.
+
+![2025-10-07 21-26-14-349](https://github.com/user-attachments/assets/bd09d409-afae-4e6e-8471-415adc804da0)
+
+2. run:
+```bash
+python scripts\vmc_to_robot.py --actual-human-height=1.65
+```
+
+3. Use a camera or a video file as the input in Dollars MONO.
+
+<img width="1272" height="1533" alt="2025_10_07_21_31_43-MuJoCo _ g1_mocap" src="https://github.com/user-attachments/assets/7aa02afc-178e-4786-8fc4-fb6bc589a813" />
+   
 ## Visualize saved robot motion
 ```bash
 python scripts/vis_robot_motion.py --robot <robot_name> --robot_motion_path <path_to_save_robot_data.pkl>
