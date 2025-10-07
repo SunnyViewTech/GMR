@@ -27,6 +27,7 @@ setup(
     "protobuf",
     "redis[hiredis]",
     "imageio[ffmpeg]",
+    "python-osc",
   ],
   python_requires='>=3.10',
 )
