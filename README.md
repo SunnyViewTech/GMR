@@ -11,6 +11,10 @@ This repository has been modified to add real-time VMC retargeting.
 
 1. Use your preferred VMC mocap software and enable its data streaming option. Here, we use Dollars MONO as an example.
 
+VMC Performer: https://protocol.vmc.info/Reference
+
+Dollars MONO: https://www.dollarsmocap.com/mono
+
 ![2025-10-07 21-26-14-349](https://github.com/user-attachments/assets/bd09d409-afae-4e6e-8471-415adc804da0)
 
 2. run:
