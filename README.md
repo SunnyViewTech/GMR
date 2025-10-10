@@ -32,6 +32,7 @@ When you stop, a timestamped `.pkl` file is saved in the current directory.
 
 <img width="513" height="856" alt="2025_10_10_17_24_51-GMR-master - Visual Studio Code" src="https://github.com/user-attachments/assets/06c633bc-627b-4a17-98de-b115659e10b6" />
 
+(Source footage courtesy of https://www.youtube.com/watch?v=cVjIqr8CTtQ)
 ## Visualize saved robot motion
 ```bash
 python scripts/vis_robot_motion.py --robot unitree_g1 --robot_motion_path <path_to_save_robot_data.pkl>
