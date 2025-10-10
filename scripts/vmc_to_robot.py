@@ -230,14 +230,10 @@ class VMCFrameAssembler:
 
             parents = VMC_PARENT_CANDIDATES.get(vmc_name, [])
             if not parents:
+                local_pos, local_rot = local
                 if vmc_name == "Hips":
-                    local_pos, local_rot = local
-                    if self._root_pos is not None and self._root_rot is not None:
-                        global_rot = self._root_rot * local_rot
-                        global_pos = self._root_pos + self._root_rot.apply(local_pos)
-                    else:
-                        global_rot = local_rot
-                        global_pos = local_pos
+                    global_pos = self._root_pos if self._root_pos is not None else local_pos
+                    global_rot = self._root_rot if self._root_rot is not None else local_rot
                     cache[vmc_name] = (global_pos, global_rot)
                     return cache[vmc_name]
                 parent_pos, parent_rot = self._root_pos, self._root_rot
