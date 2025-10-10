@@ -26,4 +26,6 @@ python scripts\vmc_to_robot.py --actual-human-height=1.65
 
 3. Use a camera or a video file as the input in Dollars MONO.
 
-<img width="1272" height="1533" alt="2025_10_07_21_31_43-MuJoCo _ g1_mocap" src="https://github.com/user-attachments/assets/7aa02afc-178e-4786-8fc4-fb6bc589a813" />
+<img width="513" height="856" alt="2025_10_10_17_24_51-GMR-master - Visual Studio Code" src="https://github.com/user-attachments/assets/06c633bc-627b-4a17-98de-b115659e10b6" />
+
+
