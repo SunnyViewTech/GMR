@@ -1,5 +1,8 @@
 ﻿import argparse
 import asyncio
+import datetime
+import os
+import pickle
 import queue
 import signal
 import threading
@@ -15,6 +18,12 @@ from pythonosc.osc_server import AsyncIOOSCUDPServer
 
 from general_motion_retargeting import GeneralMotionRetargeting as GMR
 from general_motion_retargeting import RobotMotionViewer
+
+if os.name == "nt":
+    import msvcrt
+else:
+    import select
+    import sys
 
 
 VMC_TO_GMR_NAME_MAP: Dict[str, str] = {
@@ -69,6 +78,53 @@ VMC_PARENT_CANDIDATES: Dict[str, List[str]] = {
 
 VMC_BONE_FALLBACKS: Dict[str, str] = {}
 
+
+
+def poll_toggle_key(target_key: str = "s") -> bool:
+    if os.name == "nt":
+        pressed = False
+        while msvcrt.kbhit():
+            ch = msvcrt.getwch()
+            if ch.lower() == target_key:
+                pressed = True
+        return pressed
+    else:
+        if not sys.stdin.isatty():
+            return False
+        dr, _, _ = select.select([sys.stdin], [], [], 0)
+        if dr:
+            ch = sys.stdin.read(1)
+            return ch.lower() == target_key
+    return False
+
+
+def save_recording(qpos_frames: List[np.ndarray], timestamps: List[float]) -> None:
+    if len(qpos_frames) == 0:
+        print("[VMC] No frames recorded; nothing to save.")
+        return
+    qpos_array = np.asarray(qpos_frames)
+    root_pos = qpos_array[:, :3]
+    root_rot_wxyz = qpos_array[:, 3:7]
+    root_rot_xyzw = root_rot_wxyz[:, [1, 2, 3, 0]]
+    dof_pos = qpos_array[:, 7:] if qpos_array.shape[1] > 7 else np.empty((len(qpos_frames), 0))
+    if len(timestamps) >= 2:
+        dt = np.diff(timestamps)
+        valid = dt[np.isfinite(dt) & (dt > 1e-6)]
+        fps = float(1.0 / valid.mean()) if valid.size > 0 else 0.0
+    else:
+        fps = 0.0
+    motion_data = {
+        "fps": fps,
+        "root_pos": root_pos,
+        "root_rot": root_rot_xyzw,
+        "dof_pos": dof_pos,
+        "local_body_pos": None,
+        "link_body_list": None,
+    }
+    filename = datetime.datetime.now().strftime("%Y%m%d_%H%M%S") + ".pkl"
+    with open(filename, "wb") as f:
+        pickle.dump(motion_data, f)
+    print(f"[VMC] Recording saved to {filename} ({len(qpos_frames)} frames, fps {fps:.2f}).")
 
 
 @dataclass
@@ -379,6 +435,10 @@ def main() -> None:
     )
     viewer = RobotMotionViewer(robot_type=args.robot)
 
+    recording = False
+    recorded_qpos: List[np.ndarray] = []
+    recorded_times: List[float] = []
+
     def shutdown_handler(signum: int, frame) -> None:
         raise KeyboardInterrupt
 
@@ -386,8 +446,18 @@ def main() -> None:
     signal.signal(signal.SIGTERM, shutdown_handler)
 
     print("[VMC] Retargeting loop started. Press Ctrl+C to exit.")
+    print("[VMC] Press 's' to start/stop recording; file will be saved when you stop.")
     try:
         while True:
+            if poll_toggle_key():
+                if not recording:
+                    recording = True
+                    recorded_qpos = []
+                    recorded_times = []
+                    print("[VMC] Recording started. Press 's' again to stop.")
+                else:
+                    recording = False
+                    save_recording(recorded_qpos, recorded_times)
             try:
                 frame = frame_queue.get(timeout=1.0)
             except queue.Empty:
@@ -404,6 +474,9 @@ def main() -> None:
                 if args.verbose:
                     print("[VMC] Retarget output contained invalid values; frame skipped.")
                 continue
+            if recording:
+                recorded_qpos.append(qpos.copy())
+                recorded_times.append(time.time())
             viewer.step(
                 root_pos=qpos[:3],
                 root_rot=qpos[3:7],
@@ -414,6 +487,8 @@ def main() -> None:
     except KeyboardInterrupt:
         print("\n[VMC] Shutting down...")
     finally:
+        if recording:
+            save_recording(recorded_qpos, recorded_times)
         viewer.close()
         osc_server.stop()
 
